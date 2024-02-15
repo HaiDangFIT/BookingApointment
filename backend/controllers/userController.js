@@ -75,8 +75,30 @@ const getCurrent = asyncHandler(async (req, res) => {
     });
 });
 
+const updateUser = asyncHandler(async (req, res) => {
+    const { _id } = req.user;
+    if (!_id || Object.keys(req.body).length === 0)
+        throw new Error("Vui lòng nhập đầy đủ");
+    const { password } = req.body;
+    if (password) {
+        const salt = bcryptjs.genSaltSync(10);
+        req.body.password = await bcryptjs.hash(password, salt);
+    }
+    const response = await User.findByIdAndUpdate(
+        _id,
+        req.body,
+        { new: true }).select("-password -role -isBlocked -refreshToken");
+    return res.status(200).json({
+        success: response ? true : false,
+        message: response
+            ? "Cập nhật thông tin người dùng thành công"
+            : "Cập nhật thông tin người dùng thất bại",
+    });
+});
+
 module.exports = {
     register,
     login,
     getCurrent,
+    updateUser,
 }
