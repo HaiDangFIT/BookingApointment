@@ -81,9 +81,17 @@ const getHospital = asyncHandler(async (req, res) => {
     })
 });
 
+const getCountHospital = asyncHandler(async (req, res) => {
+    const totalCount = await Hospital.find().countDocuments();
+    return res.status(200).json({
+        success: totalCount ? true : false,
+        data: totalCount,
+    });
+});
+
 module.exports = {
     getAllHospitals,
     getHospital,
-    // getCountHospital,
+    getCountHospital,
     // ratingsHospital,
 };
