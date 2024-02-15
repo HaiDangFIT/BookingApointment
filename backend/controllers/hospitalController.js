@@ -44,7 +44,7 @@ const getAllHospitals = asyncHandler(async (req, res) => {
 
     let queryCommand = Hospital.find(formatedQueries)
         .populate("specialtyID")
-        .populate({ path: "hostID", select: "firstName lastName address" });
+        .populate({ path: "hostID", select: "firstName lastName" });
 
     if (req.query.sort) {
         const sortBy = req.query.sort.split(",").join(" ");
@@ -70,9 +70,20 @@ const getAllHospitals = asyncHandler(async (req, res) => {
     });
 });
 
+const getHospital = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const response = await Hospital.findById(id)
+        .populate("specialtyID")
+        .populate({ path: "hostID", select: "firstName lastName" });
+    return res.status(200).json({
+        success: response ? true : false,
+        data: response,
+    })
+});
+
 module.exports = {
     getAllHospitals,
-    // getHospital,
+    getHospital,
     // getCountHospital,
     // ratingsHospital,
 };
