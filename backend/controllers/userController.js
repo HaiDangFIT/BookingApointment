@@ -64,7 +64,19 @@ const login = asyncHandler(async (req, res) => {
     }
 });
 
+const getCurrent = asyncHandler(async (req, res) => {
+    const { _id } = req.user;
+    const response = await User.findById(_id).select(
+        "-password -isBlocked -refreshToken"
+    );
+    return res.status(200).json({
+        success: response ? true : false,
+        data: response ? response : "Không tìm thấy người dùng",
+    });
+});
+
 module.exports = {
     register,
     login,
+    getCurrent,
 }
