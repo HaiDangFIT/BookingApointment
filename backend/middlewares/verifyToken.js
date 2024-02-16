@@ -1,7 +1,5 @@
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
-const ObjectID = require("mongodb").ObjectId;
-const User = require("../models/user");
 
 const verifyAccessToken = asyncHandler(async (req, res, next) => {
     // Bearer token
