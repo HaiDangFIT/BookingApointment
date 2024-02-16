@@ -9,7 +9,7 @@ const moment = require("moment-timezone");
 
 const getAllDoctor = asyncHandler(async (req, res) => {
     let users = [];
-    let fullNameQueries;
+    let lastNameQueries;
     let nameSpecialty;
     let nameHospital;
     const queries = { ...req.query };
@@ -26,9 +26,9 @@ const getAllDoctor = asyncHandler(async (req, res) => {
     }
 
     //Tìm theo tên bác sĩ
-    if (queries?.fullName) {
+    if (queries?.lastName) {
         users = await User.find({
-            fullName: { $regex: queries.fullName, $options: "i" },
+            lastName: { $regex: queries.lastName, $options: "i" },
             role: 3,
         });
         users?.forEach((item, index, array) => {
@@ -39,9 +39,9 @@ const getAllDoctor = asyncHandler(async (req, res) => {
         if (users?.length < 1) {
             throw new Error("Không tìm thấy bác sĩ!!!");
         }
-        fullNameQueries = { $or: users };
+        lastNameQueries = { $or: users };
     }
-    delete formatedQueries?.fullName;
+    delete formatedQueries?.lastName;
 
     if (queries?.nameSpecialty) {
         nameSpecialty = queries?.nameSpecialty;
@@ -55,7 +55,7 @@ const getAllDoctor = asyncHandler(async (req, res) => {
 
     q = {
         ...formatedQueries,
-        ...fullNameQueries,
+        ...lastNameQueries,
     };
     let queryCommand = Doctor.find(q).populate({
         path: "_id",
@@ -140,7 +140,7 @@ const getDoctor = asyncHandler(async (req, res) => {
             path: "ratings",
             populate: {
                 path: "postedBy",
-                select: "fullName avatar",
+                select: "firstName lastName avatar",
             },
         });
     return res.status(200).json({
@@ -149,7 +149,18 @@ const getDoctor = asyncHandler(async (req, res) => {
     });
 });
 
+
+const getCountDoctor = asyncHandler(async (req, res) => {
+    const totalCount = await Doctor.find().countDocuments();
+    return res.status(200).json({
+        success: totalCount ? true : false,
+        data: totalCount,
+    });
+});
+
+
 module.exports = {
     getAllDoctor,
     getDoctor,
+    getCountDoctor,
 }
