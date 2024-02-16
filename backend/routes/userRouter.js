@@ -10,5 +10,6 @@ router.post("/logout", ctrls.logout);
 
 router.get("/current", [verifyAccessToken], ctrls.getCurrent);
 router.put("/current", [verifyAccessToken], ctrls.updateUser);
+router.post("/refreshAccessToken", ctrls.refreshAccessToken);
 
 module.exports = router;

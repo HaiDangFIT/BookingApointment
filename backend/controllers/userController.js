@@ -117,10 +117,34 @@ const updateUser = asyncHandler(async (req, res) => {
     });
 });
 
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    // Lấy token từ cookies
+    const cookie = req.cookies;
+    // Check xem có token hay không
+    if (!cookie && !cookie.refreshToken)
+        throw new Error("Không tìm thấy Refresh token trên cookies");
+    // Check token có hợp lệ hay không
+    const rs = await jwt.verify(cookie.refreshToken, process.env.JWT_SECRET);
+    const response = await User.findOne({
+        _id: rs._id,
+        refreshToken: cookie.refreshToken,
+    });
+    if (!response) {
+        throw new Error("RefreshToken không trùng khớp");
+    }
+    res.setHeader("Authorization", `Bearer ${accessToken}`);
+    return res.status(200).json({
+        success: true,
+        accessToken,
+
+    });
+});
+
 module.exports = {
     register,
     login,
     logout,
     getCurrent,
     updateUser,
+    refreshAccessToken,
 }
