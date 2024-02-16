@@ -127,6 +127,29 @@ const getAllDoctor = asyncHandler(async (req, res) => {
     });
 });
 
+const getDoctor = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const response = await Doctor.findById(id)
+        .populate("_id")
+        .populate("specialtyID")
+        .populate({
+            path: "hospitalID",
+            select: "name address description image",
+        })
+        .populate({
+            path: "ratings",
+            populate: {
+                path: "postedBy",
+                select: "fullName avatar",
+            },
+        });
+    return res.status(200).json({
+        success: response ? true : false,
+        data: response ? response : "Bác sĩ không được tìm thấy",
+    });
+});
+
 module.exports = {
     getAllDoctor,
+    getDoctor,
 }
