@@ -27,6 +27,117 @@ const verifyAccessToken = asyncHandler(async (req, res, next) => {
     }
 });
 
+const isAdmin = asyncHandler((req, res, next) => {
+    const { role } = req.user;
+    if (role !== 1)
+        //admin
+        return res.status(401).json({
+            success: false,
+            mes: "Bạn không có quyền!!!",
+        });
+    next();
+});
+
+const isHost = asyncHandler((req, res, next) => {
+    const { role } = req.user;
+    if (role !== 2)
+        //host
+        return res.status(401).json({
+            success: false,
+            mes: "Bạn không có quyền!!!",
+        });
+    next();
+});
+
+const isAdminOrHost = asyncHandler((req, res, next) => {
+    const { role } = req.user;
+    if (role !== 2 && role !== 1)
+        //host
+        return res.status(401).json({
+            success: false,
+            mes: "Bạn không có quyền!!!",
+        });
+    next();
+});
+
+const isDoctor = asyncHandler((req, res, next) => {
+    const { role } = req.user;
+    if (role !== 3)
+        //doctoc
+        return res.status(401).json({
+            success: false,
+            mes: "Bạn không có quyền!!!",
+        });
+    next();
+});
+
+const checkPermissionDoctor = asyncHandler(async (req, res, next) => {
+    const { role, _id } = req.user;
+    const { hospitalID } = req.body;
+    const { id } = req.params;
+    if (role === 3) {
+        if (hospitalID) {
+            const isHost = await Hospital.find({ _id: hospitalID, host: _id });
+            if (!isHost) {
+                return res.status(401).json({
+                    success: false,
+                    mes: "Bạn không có quyền!!!",
+                });
+            }
+        } else {
+            const doctor = await Doctor.findById(id).populate("hospitalID");
+            if (doctor?.hospitalID?.host?.toString() !== _id.toString()) {
+                return res.status(401).json({
+                    success: false,
+                    mes: "Bạn không có quyền!!!",
+                });
+            }
+        }
+    }
+
+    next();
+});
+
+const checkPermissionBooking = asyncHandler(async (req, res, next) => {
+    const { role, _id } = req.user;
+    const { id } = req.params;
+    const booking = await Booking.findById(id).populate({
+        path: "scheduleID",
+        populate: {
+            path: "doctorID",
+            model: "Doctor",
+            select: "hospitalID  _id",
+            populate: [
+                {
+                    path: "hospitalID",
+                    model: "Hospital",
+                    select: " host",
+                },
+            ],
+        },
+    });
+    if (
+        (role === 3 &&
+            _id.toString() !== booking?.scheduleID?.doctorID?._id?.toString()) ||
+        (role === 2 &&
+            _id.toString() !==
+            booking?.scheduleID?.doctorID?.hospitalID?.host?.toString())
+    ) {
+        return res.status(401).json({
+            success: false,
+            mes: "Bạn không có quyền!!!",
+        });
+    }
+
+    next();
+});
+
 module.exports = {
     verifyAccessToken,
+    isAdmin,
+    isHost,
+    isDoctor,
+    isAdminOrHost,
+    checkPermissionBooking,
+    checkPermissionDoctor,
 }
