@@ -5,13 +5,14 @@ const Specialty = require("../models/specialty");
 const getAllSpecialty = asyncHandler(async (req, res) => {
     const queries = { ...req.query };
     const exludeFields = ["limit", "sort", "page", "fields"];
+    console.log(req.query.fields);
+
     exludeFields.forEach((e1) => delete queries[e1]);
     let queryString = JSON.stringify(queries);
     queryString = queryString.replace(
         /\b(gte|gt|lt|lte)\b/g,
         (macthedEl) => `$${macthedEl}`
     );
-
     const formatedQueries = JSON.parse(queryString);
     if (queries?.name) {
         formatedQueries.name = { $regex: queries.name, $options: "i" };
@@ -32,7 +33,6 @@ const getAllSpecialty = asyncHandler(async (req, res) => {
     const limit = +req.query.limit || process.env.LIMIT;
     const skip = (page - 1) * limit;
     queryCommand.skip(skip).limit(limit);
-
     const response = await queryCommand.exec();
     const counts = await Specialty.find(formatedQueries).countDocuments();
     return res.status(200).json({
