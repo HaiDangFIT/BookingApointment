@@ -212,10 +212,23 @@ const updateSchedule = asyncHandler(async (req, res) => {
     });
 });
 
+const deleteSchedule = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const response = await Schedule.findByIdAndDelete(id);
+    await Booking.deleteMany({ scheduleID: id });
+    return res.status(200).json({
+        success: response ? true : false,
+        message: response
+            ? `Xóa lịch khám bệnh của bác sĩ thành công`
+            : "Xóa lịch khám bệnh của bác sĩ thất bại",
+    });
+});
+
 module.exports = {
     getAllSchedule,
     getSchedule,
     getSchedulesByDoctorID,
     addSchedule,
     updateSchedule,
+    deleteSchedule
 }

@@ -13,5 +13,6 @@ router.get("/doctor/:id", [verifyAccessToken], ctrls.getSchedulesByDoctorID);
 //ADMIN
 router.post("/", [verifyAccessToken, isAdminOrHost], ctrls.addSchedule);
 router.put("/:id", [verifyAccessToken, isAdminOrHost], ctrls.updateSchedule);
+router.delete("/:id", [verifyAccessToken, isAdminOrHost], ctrls.deleteSchedule);
 
 module.exports = router;
