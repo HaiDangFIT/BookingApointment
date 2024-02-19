@@ -85,6 +85,7 @@ const logout = asyncHandler(async (req, res) => {
     });
 });
 
+//USER
 const getCurrent = asyncHandler(async (req, res) => {
     const { _id } = req.user;
     const response = await User.findById(_id).select(
@@ -140,6 +141,94 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     });
 });
 
+//ADMIN 
+const getUsers = asyncHandler(async (req, res) => {
+    const queries = { ...req.query };
+    const exludeFields = ["limit", "sort", "page", "fields"];
+    exludeFields.forEach((el) => delete queries[el]);
+    let queryString = JSON.stringify(queries);
+    queryString = queryString.replace(
+        /\b(gte|gt|lt|lte)\b/g,
+        (macthedEl) => `$${macthedEl}`
+    );
+    const formatedQueries = JSON.parse(queryString);
+
+    if (queries?.lastName) {
+        formatedQueries.lastName = { $regex: queries.lastName, $option: "i" };
+    }
+    if (queries?.role) {
+        formatedQueries.role = queries.role;
+    }
+    if (queries?.phone) {
+        formatedQueries.phone = queries.phone;
+    }
+
+    let queryCommand = User.find(formatedQueries);
+
+    if (req.query.sort) {
+        const sortBy = req.query.sort.split(",").join(" ");
+        queryCommand = queryCommand.sort(sortBy);
+    }
+    if (req.query.fields) {
+        const fields = req.query.fields.split(",").join(" ");
+        queryCommand = queryCommand.select(fields);
+    }
+
+    const page = +req.query.page || 1;
+    const limit = +req.query.limit || process.env.LIMIT;
+    const skip = (page - 1) * limit;
+    queryCommand.skip(skip).limit(limit);
+
+    const response = await queryCommand.exec();
+    const counts = await User.find(formatedQueries).countDocuments();
+    if (formatedQueries?.role === "3") {
+        let usersWithoutDoctor = [];
+
+        for (const user of response) {
+            const doctorInfo = await Doctor.findOne({ _id: user._id }).exec();
+
+            if (!doctorInfo) {
+                usersWithoutDoctor.push(user);
+            }
+        }
+        return res.status(200).json({
+            success: usersWithoutDoctor.length > 0 ? true : false,
+            data:
+                usersWithoutDoctor.length > 0
+                    ? usersWithoutDoctor
+                    : "Lấy danh sách người dùng thất bại",
+            counts,
+        });
+    }
+    return res.status(200).json({
+        success: response.length > 0 ? true : false,
+        data: response.length > 0 ? response : "Lấy danh sách người dùng thất bại",
+        counts,
+    });
+});
+
+const addUserByAdmin = asyncHandler(async (req, res) => {
+    const { firstName, lastName, password, phone, gender } = req.body;
+    if (!firstName || !lastName || !password || !phone || !gender)
+        return res.status(400).json({
+            success: false,
+            message: "Vui lòng nhập đầy đủ",
+        });
+    const user = await User.findOne({ phone });
+    if (user) {
+        throw new Error("Tài khoản đã tồn tại");
+    } else {
+        const newUser = await User.create(req.body);
+        return res.status(200).json({
+            success: newUser ? true : false,
+            message: newUser
+                ? "Thêm người dùng thành công"
+                : "Thêm người dùng thất bại",
+        });
+    }
+});
+
+
 module.exports = {
     register,
     login,
@@ -147,4 +236,6 @@ module.exports = {
     getCurrent,
     updateUser,
     refreshAccessToken,
+    getUsers,
+    addUserByAdmin,
 }

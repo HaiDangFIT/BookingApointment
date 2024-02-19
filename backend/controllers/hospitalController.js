@@ -44,7 +44,7 @@ const getAllHospitals = asyncHandler(async (req, res) => {
 
     let queryCommand = Hospital.find(formatedQueries)
         .populate("specialtyID")
-        .populate({ path: "hostID", select: "firstName lastName" });
+        .populate({ path: "hostID", select: "firstName lastName phone" });
 
     if (req.query.sort) {
         const sortBy = req.query.sort.split(",").join(" ");
@@ -93,5 +93,4 @@ module.exports = {
     getAllHospitals,
     getHospital,
     getCountHospital,
-    // ratingsHospital,
 };

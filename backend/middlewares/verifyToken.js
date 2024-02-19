@@ -31,7 +31,7 @@ const isAdmin = asyncHandler((req, res, next) => {
         //admin
         return res.status(401).json({
             success: false,
-            mes: "Bạn không có quyền!!!",
+            mes: "Không có quyền truy cập!!!",
         });
     next();
 });
@@ -42,7 +42,7 @@ const isHost = asyncHandler((req, res, next) => {
         //host
         return res.status(401).json({
             success: false,
-            mes: "Bạn không có quyền!!!",
+            mes: "Không có quyền truy cập!!!",
         });
     next();
 });
@@ -53,7 +53,7 @@ const isAdminOrHost = asyncHandler((req, res, next) => {
         //host
         return res.status(401).json({
             success: false,
-            mes: "Bạn không có quyền!!!",
+            mes: "Không có quyền truy cập!!!",
         });
     next();
 });
@@ -64,7 +64,7 @@ const isDoctor = asyncHandler((req, res, next) => {
         //doctoc
         return res.status(401).json({
             success: false,
-            mes: "Bạn không có quyền!!!",
+            mes: "Không có quyền truy cập!!!",
         });
     next();
 });
@@ -79,7 +79,7 @@ const checkPermissionDoctor = asyncHandler(async (req, res, next) => {
             if (!isHost) {
                 return res.status(401).json({
                     success: false,
-                    mes: "Bạn không có quyền!!!",
+                    mes: "Không có quyền truy cập!!!",
                 });
             }
         } else {
@@ -87,7 +87,7 @@ const checkPermissionDoctor = asyncHandler(async (req, res, next) => {
             if (doctor?.hospitalID?.host?.toString() !== _id.toString()) {
                 return res.status(401).json({
                     success: false,
-                    mes: "Bạn không có quyền!!!",
+                    mes: "Không có quyền truy cập!!!",
                 });
             }
         }
@@ -96,39 +96,6 @@ const checkPermissionDoctor = asyncHandler(async (req, res, next) => {
     next();
 });
 
-const checkPermissionBooking = asyncHandler(async (req, res, next) => {
-    const { role, _id } = req.user;
-    const { id } = req.params;
-    const booking = await Booking.findById(id).populate({
-        path: "scheduleID",
-        populate: {
-            path: "doctorID",
-            model: "Doctor",
-            select: "hospitalID  _id",
-            populate: [
-                {
-                    path: "hospitalID",
-                    model: "Hospital",
-                    select: " host",
-                },
-            ],
-        },
-    });
-    if (
-        (role === 3 &&
-            _id.toString() !== booking?.scheduleID?.doctorID?._id?.toString()) ||
-        (role === 2 &&
-            _id.toString() !==
-            booking?.scheduleID?.doctorID?.hospitalID?.host?.toString())
-    ) {
-        return res.status(401).json({
-            success: false,
-            mes: "Bạn không có quyền!!!",
-        });
-    }
-
-    next();
-});
 
 module.exports = {
     verifyAccessToken,
@@ -136,6 +103,5 @@ module.exports = {
     isHost,
     isDoctor,
     isAdminOrHost,
-    checkPermissionBooking,
     checkPermissionDoctor,
 }
