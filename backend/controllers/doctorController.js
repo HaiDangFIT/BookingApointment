@@ -134,13 +134,13 @@ const getDoctor = asyncHandler(async (req, res) => {
         .populate("specialtyID")
         .populate({
             path: "hospitalID",
-            select: "name address description image",
+            select: "name address description",
         })
         .populate({
             path: "ratings",
             populate: {
                 path: "postedBy",
-                select: "firstName lastName avatar",
+                select: "firstName lastName",
             },
         });
     return res.status(200).json({
