@@ -1,4 +1,5 @@
-const User = require("../models/user")
+const User = require("../models/user");
+const Doctor = require("../models/doctor");
 const asyncHandler = require('express-async-handler');
 const {
     generateAccessToken,
@@ -228,6 +229,44 @@ const addUserByAdmin = asyncHandler(async (req, res) => {
     }
 });
 
+const updateUserByAdmin = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    if (Object.keys(req.body).length === 0)
+        throw new Error("Vui lòng nhập đầy đủ");
+    const { password, role } = req.body;
+    if (password) {
+        const salt = bcryptjs.genSaltSync(10);
+        req.body.password = await bcryptjs.hash(password, salt);
+    }
+    if (role && (await User.find({ _id: id, role: 3 }))) {
+        await Doctor.findByIdAndDelete(id);
+    }
+    const response = await User.findByIdAndUpdate(id, req.body, {
+        new: true,
+    }).select("-password");
+    return res.status(200).json({
+        success: response ? true : false,
+        message: response
+            ? "Cập nhật thông tin người dùng thành công"
+            : "Cập nhật thông tin người dùng thất bại",
+    });
+});
+
+const deleteUserByAdmin = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    if (!id) throw new Error("Vui lòng nhập đầy đủ");
+    const user = await User.findById(id);
+    if (user?.role === 3) {
+        await Doctor.findByIdAndDelete(id);
+    }
+    const response = await User.findByIdAndDelete(id);
+    return res.status(200).json({
+        success: response ? true : false,
+        message: response
+            ? `Đã xóa người dùng "${response.phone}" thành công`
+            : "Xóa người dùng thất bại",
+    });
+});
 
 module.exports = {
     register,
@@ -238,4 +277,6 @@ module.exports = {
     refreshAccessToken,
     getUsers,
     addUserByAdmin,
+    updateUserByAdmin,
+    deleteUserByAdmin,
 }

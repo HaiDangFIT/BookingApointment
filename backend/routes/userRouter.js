@@ -15,6 +15,8 @@ router.put("/current", [verifyAccessToken], ctrls.updateUser);
 router.post("/refreshAccessToken", ctrls.refreshAccessToken);
 
 router.get("/", [verifyAccessToken, isAdminOrHost], ctrls.getUsers);
-router.post("/", [verifyAccessToken, isAdmin], ctrls.addUserByAdmin);
+router.post("/addUserByAd", [verifyAccessToken, isAdmin], ctrls.addUserByAdmin);
+router.put("/updateUserByAd/:id", [verifyAccessToken, isAdmin], ctrls.updateUserByAdmin);
+router.delete("/deleteUserByAd/:id", [verifyAccessToken, isAdmin], ctrls.deleteUserByAdmin);
 
 module.exports = router;
