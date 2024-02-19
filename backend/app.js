@@ -4,6 +4,8 @@ require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const initRoutes = require("./routes");
+const moment = require("moment-timezone");
+moment.tz.setDefault("Asia/Ho_Chi_Minh");
 
 const app = express();
 const port = process.env.PORT || 8888;

@@ -133,14 +133,6 @@ const getSchedulesByDoctorID = asyncHandler(async (req, res) => {
 });
 
 const addSchedule = asyncHandler(async (req, res) => {
-    // const { doctorID, cost, date, timeType } = req.body;
-    // if (!doctorID || !cost || !date || !timeType) {
-    //     throw new Error("Vui lòng nhập đầy đủ");
-    // }
-    // const alreadyDoctor = await Doctor.findById(doctorID);
-    // if (!alreadyDoctor) {
-    //     throw new Error("Bác sĩ không tồn tại");
-    // }
     const { doctorID, cost, date, timeType } = req.body;
     if (!doctorID || !cost || !date || !timeType) {
         throw new Error("Vui lòng nhập đầy đủ");
@@ -149,16 +141,17 @@ const addSchedule = asyncHandler(async (req, res) => {
     if (!alreadyDoctor) {
         throw new Error("Bác sĩ không tồn tại");
     }
-    const newDate = new Date(date);
+
+    const newDate = new Date(+date);
     newDate.setHours(7, 0, 0, 0);
     newDate.setDate(newDate.getDate());
     const isDuplicateTime = timeType.some(
-        (item, index, array) =>
-            array.filter((subItem) => subItem.time === item.time).length > 1
+        (item, index, array) => array.filter((subItem) => subItem.time === item.time).length > 1
     );
     if (isDuplicateTime) {
-        throw new Error("Giờ làm việc bị trùng. Vui lòng nhập đúng");
-    }
+        throw new Error("Giờ làm việc đã tồn tại, vui lòng chọn lại");
+    };
+
     const alreadySchedule = await Schedule.find({ doctorID, date: newDate });
     if (alreadySchedule.length > 0) {
         throw new Error(
@@ -181,9 +174,48 @@ const addSchedule = asyncHandler(async (req, res) => {
     }
 });
 
+const updateSchedule = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { doctorID } = req.body;
+    if (!doctorID) {
+        throw new Error("Vui lòng nhập ID bác sĩ");
+    }
+    if (req.body.date) {
+        const newDate = new Date(+req.body.date);
+        newDate.setHours(7, 0, 0, 0);
+        newDate.setDate(newDate.getDate());
+        req.body.date = newDate;
+    }
+
+    if (req.body.doctorID && req.body.date) {
+        const alreadySchedule = await Schedule.find({
+            _id: { $ne: id },
+            doctorID: req.body.doctorID,
+            date: req.body.date,
+        });
+        if (alreadySchedule.length > 0) {
+            throw new Error(`Đã tồn tại lịch khám ngày 
+                ${new Date(req.body.date).getDate()}/
+                ${new Date(req.body.date).getMonth() + 1}/
+                ${new Date(req.body.date).getFullYear()}`
+            );
+        }
+    };
+    const response = await Schedule.findByIdAndUpdate(id, req.body, {
+        new: true,
+    });
+    return res.status(200).json({
+        success: response ? true : false,
+        message: response
+            ? "Cập nhật lịch khám bệnh thành công"
+            : "Cập nhật lịch khám bệnh thất bại",
+    });
+});
+
 module.exports = {
     getAllSchedule,
     getSchedule,
     getSchedulesByDoctorID,
     addSchedule,
+    updateSchedule,
 }
