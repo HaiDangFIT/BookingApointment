@@ -10,10 +10,16 @@ const apointmentSchema = new mongoose.Schema(
             type: mongoose.Types.ObjectId,
             ref: "User",
         },
-        image: {
-            type: String,
-        },
         status: {
+            type: String,
+            default: "Đang xử lý",
+            enum: ["Đã hủy", "Đang xử lý", "Đã xác nhận", "Đã khám", "Bỏ khám"],
+        },
+        time: {
+            type: String,
+            required: true,
+        },
+        image: {
             type: String,
         },
         description: {

@@ -1,6 +1,9 @@
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
-
+const Apointment = require("../models/apointment");
+const Doctor = require("../models/doctor");
+const Hospital = require("../models/hospital");
+const { populate } = require("../models/schedule");
 const verifyAccessToken = asyncHandler(async (req, res, next) => {
     // Bearer token
     // headers: { authorization: Bearer token}
@@ -79,7 +82,7 @@ const checkPermissionDoctor = asyncHandler(async (req, res, next) => {
             if (!isHost) {
                 return res.status(401).json({
                     success: false,
-                    mes: "Không có quyền truy cập!!!",
+                    message: "Không có quyền truy cập!!!",
                 });
             }
         } else {
@@ -87,15 +90,42 @@ const checkPermissionDoctor = asyncHandler(async (req, res, next) => {
             if (doctor?.hospitalID?.host?.toString() !== _id.toString()) {
                 return res.status(401).json({
                     success: false,
-                    mes: "Không có quyền truy cập!!!",
-                });
+                    message: "Không cớ quyền truy cập!!!",
+                })
             }
         }
     }
-
-    next();
 });
 
+const checkPermissionBooking = asyncHandler(async (req, res) => {
+    const { role, _id } = req.user;
+    const { id } = req.params;
+    const apointment = await Apointment.findById(id).populate({
+        path: "scheduleID",
+        populate: {
+            path: "doctorID",
+            model: "Doctor",
+            select: "hospitalID _id",
+            populate: [
+                {
+                    path: "hospitalID",
+                    model: "Hospital",
+                    select: "host",
+                },
+            ],
+        },
+    });
+    if (
+        (role === 3 && _id.toString() !== apointment?.scheduleID?.doctorID?._id?.toString()) ||
+        (role === 2 && _id.toString() !== apointment?.scheduleID?.doctorID?.clinicID?.host?.toString())
+    ) {
+        return res.status(401).json({
+            success: false,
+            message: "Bạn không có quyền!!!",
+        });
+    }
+    next();
+});
 
 module.exports = {
     verifyAccessToken,
@@ -104,4 +134,5 @@ module.exports = {
     isDoctor,
     isAdminOrHost,
     checkPermissionDoctor,
+    checkPermissionBooking,
 }

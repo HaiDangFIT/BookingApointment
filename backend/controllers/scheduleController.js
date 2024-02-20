@@ -132,6 +132,17 @@ const getSchedulesByDoctorID = asyncHandler(async (req, res) => {
     });
 });
 
+const getSchedulesOfDoctor = asyncHandler(async (req, res) => {
+    const { _id } = req.user;
+    const response = await Schedule.find({ doctorID: _id });
+    return res.status(200).json({
+        success: response ? true : false,
+        data: response
+            ? response
+            : "Lấy danh sách lịch khám bệnh của bác sĩ thất bại",
+    });
+});
+
 const addSchedule = asyncHandler(async (req, res) => {
     const { doctorID, cost, date, timeType } = req.body;
     if (!doctorID || !cost || !date || !timeType) {
@@ -142,7 +153,7 @@ const addSchedule = asyncHandler(async (req, res) => {
         throw new Error("Bác sĩ không tồn tại");
     }
 
-    const newDate = new Date(+date);
+    const newDate = new Date(date);
     newDate.setHours(7, 0, 0, 0);
     newDate.setDate(newDate.getDate());
     const isDuplicateTime = timeType.some(
@@ -181,7 +192,7 @@ const updateSchedule = asyncHandler(async (req, res) => {
         throw new Error("Vui lòng nhập ID bác sĩ");
     }
     if (req.body.date) {
-        const newDate = new Date(+req.body.date);
+        const newDate = new Date(req.body.date);
         newDate.setHours(7, 0, 0, 0);
         newDate.setDate(newDate.getDate());
         req.body.date = newDate;
@@ -228,7 +239,8 @@ module.exports = {
     getAllSchedule,
     getSchedule,
     getSchedulesByDoctorID,
+    getSchedulesOfDoctor,
     addSchedule,
     updateSchedule,
-    deleteSchedule
+    deleteSchedule,
 }
