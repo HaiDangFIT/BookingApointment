@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcryptjs = require("bcrypt");
+const moment = require('moment-timezone');
 
 const userSchema = new mongoose.Schema(
     {
@@ -58,7 +59,10 @@ const userSchema = new mongoose.Schema(
         }
     },
     {
-        timestamps: true
+        timestamps: {
+            type: Date,
+            default: new Date(new Date().getTime + (7 * 60 * 60 * 1000))
+        }
     }
 );
 
@@ -69,6 +73,11 @@ userSchema.pre("save", async function (next) {
     }
     const salt = bcryptjs.genSaltSync(10);
     this.password = await bcryptjs.hash(this.password, salt);
+    const currentDate = new Date();
+    const localTimestamp = currentDate.getTime() + (7 * 60 * 60 * 1000);
+    this.createdAt = new Date(localTimestamp);
+    this.updatedAt = new Date(localTimestamp);
+    next();
 });
 
 userSchema.methods = {
@@ -76,6 +85,13 @@ userSchema.methods = {
         return await bcryptjs.compare(password, this.password);
     },
 };
+
+userSchema.pre('findOneAndUpdate', async function (next) {
+    const currentDate = new Date();
+    const localTimestamp = currentDate.getTime() + (7 * 60 * 60 * 1000);
+    this._update.updatedAt = new Date(localTimestamp);
+    next();
+});
 
 //Export the model
 module.exports = mongoose.model("User", userSchema);

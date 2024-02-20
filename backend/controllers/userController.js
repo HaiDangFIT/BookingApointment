@@ -107,6 +107,7 @@ const updateUser = asyncHandler(async (req, res) => {
         const salt = bcryptjs.genSaltSync(10);
         req.body.password = await bcryptjs.hash(password, salt);
     }
+
     const response = await User.findByIdAndUpdate(
         _id,
         req.body,

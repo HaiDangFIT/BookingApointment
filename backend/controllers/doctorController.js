@@ -158,9 +158,143 @@ const getCountDoctor = asyncHandler(async (req, res) => {
     });
 });
 
+const addDoctor = asyncHandler(async (req, res) => {
+    const { id, hospitalID, specialtyID, description, position } = req.body;
+    const user = await User.findById(id);
+    const alreadyDoctor = await Doctor.findById(id);
+    if (user?.role !== 3) {
+        throw new Error("Người dùng không có quyền bác sĩ")
+    }
+    if (!user) {
+        throw new Error("Không tìm thấy người dùng")
+    }
+    if (alreadyDoctor) {
+        throw new Error("Bác sĩ này đã tồn tại")
+    }
+    if (!description || !position || !specialtyID || !hospitalID) {
+        return res.status(200).json({
+            success: false,
+            message: "Vui lòng nhập đầy đủ"
+        });
+    }
+    const alreadySpecialty = await Specialty.findById(specialtyID);
+    const alreadyHospital = await Hospital.findById(hospitalID);
+    if (alreadyHospital && alreadySpecialty) {
+        const specialty = alreadyHospital?.specialtyID?.find(
+            (el) => el.toString() === specialtyID
+        );
+        if (!specialty) {
+            throw new Error("Bệnh viện không tồn tại chuyên khoa này");
+        }
+        const response = await Doctor.create({
+            _id: id,
+            specialtyID,
+            position,
+            hospitalID,
+            description,
+        });
+        return res.status(200).json({
+            success: response ? true : false,
+            message: respone
+                ? "Thêm thông tin bác sĩ thành công"
+                : "Thêm thông tin bác sĩ thất bại",
+        })
+    }
+    return res.status(200).json({
+        success: false,
+        mesage: "Bệnh viện hoặc Chuyên khoa không tồn tại",
+    });
+});
 
+const deleteDoctor = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const response = await Doctor.findByIdAndDelete(id);
+    return res.status(200).json({
+        success: response ? true : false,
+        message: response ? "Xóa thành công" : "Xóa thất bại"
+    });
+});
+
+const updateDoctor = asyncHandler(async (req, res) => {
+    const id = req.params;
+    const { specialtyID, hospitalID, avatar } = req.body;
+    if (Object.keys(req.body).length === 0) {
+        throw new Error("Vui lòng nhập đầy đủ!!!");
+    }
+    const Doctor = await Doctor.findById(id).populate("hospitalID");
+    if (specialtyID) {
+        if (hospitalID) {
+            const hospital = await Hospital.findById(hospitalID);
+            const alreadySpecialty = hospital?.specialtyID?.find(
+                (el) => el.toString() === specialtyID
+            );
+            if (!alreadySpecialty) {
+                throw new Error("Bệnh viện không tồn tại chuyên khoa này")
+            }
+        } else {
+            const specialty = doctor?.hospitalID?.specialtyID?.find(
+                (el) => el.toString() === specialtyID
+            )
+            if (!specialty) {
+                throw new Error("Bệnh viện không tồn tại chuyên khoa này")
+            }
+        }
+    }
+});
+
+const ratingsDoctor = asyncHandler(async (req, res) => {
+    const { _id } = req.params;
+    const { star, postedBy, comment, updatedAt, doctorID } = req.body;
+    if (!star || !doctorID) {
+        throw new Error("Vui lòng nhập đánh giá đầy đủ");
+    }
+    const ratingDoctor = await Doctor.findById(doctorID);
+    const alreadyDoctor = ratingDoctor?.ratings?.find(
+        (el) => el.postedBy.toString() === _id
+    );
+
+    if (alreadyDoctor) {
+        await Doctor.updateOne(
+            {
+                _id: doctorID,
+                ratings: { $elemMatch: alreadyDoctor },
+            },
+            {
+                $set: {
+                    "ratings.$.star": star,
+                    "ratings.$.comment": comment,
+                    "ratings.$.updatedAt": updatedAt,
+                }
+            },
+            { new: true }
+        )
+    } else {
+        await Doctor.findByIdAndUpdate(
+            doctorID,
+            {
+                $push: { ratings: { star, comment, postedBy: _id, updatedAt } }
+            },
+            { new: true }
+        )
+    }
+
+    const updateDoctor = await Doctor.findById(doctorID);
+    const ratingCount = updateDoctor.ratings.length;
+    const sum = updatedDoctor.ratings.reduce((sum, el) => sum + +el.star, 0);
+
+    updatedDoctor.totalRatings = Math.round((sum * 10) / ratingCount) / 10;
+    await updatedDoctor.save();
+    return res.status(200).json({
+        success: true,
+        data: `Đánh giá thành công`,
+    });
+});
 module.exports = {
     getAllDoctor,
     getDoctor,
     getCountDoctor,
+    addDoctor,
+    deleteDoctor,
+    updateDoctor,
+    ratingsDoctor,
 }
