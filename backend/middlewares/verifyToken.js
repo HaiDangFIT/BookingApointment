@@ -95,6 +95,7 @@ const checkPermissionDoctor = asyncHandler(async (req, res, next) => {
             }
         }
     }
+    next();
 });
 
 const checkPermissionBooking = asyncHandler(async (req, res) => {

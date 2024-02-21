@@ -183,25 +183,25 @@ const getUsers = asyncHandler(async (req, res) => {
 
     const response = await queryCommand.exec();
     const counts = await User.find(formatedQueries).countDocuments();
-    if (formatedQueries?.role === "3") {
-        let usersWithoutDoctor = [];
+    // if (formatedQueries?.role === "3") {
+    //     let usersWithoutDoctor = [];
 
-        for (const user of response) {
-            const doctorInfo = await Doctor.findOne({ _id: user._id }).exec();
+    //     for (const user of response) {
+    //         const doctorInfo = await Doctor.findOne({ _id: user._id }).exec();
 
-            if (!doctorInfo) {
-                usersWithoutDoctor.push(user);
-            }
-        }
-        return res.status(200).json({
-            success: usersWithoutDoctor.length > 0 ? true : false,
-            data:
-                usersWithoutDoctor.length > 0
-                    ? usersWithoutDoctor
-                    : "Lấy danh sách người dùng thất bại",
-            counts,
-        });
-    }
+    //         if (!doctorInfo) {
+    //             usersWithoutDoctor.push(user);
+    //         }
+    //     }
+    //     return res.status(200).json({
+    //         success: usersWithoutDoctor.length > 0 ? true : false,
+    //         data:
+    //             usersWithoutDoctor.length > 0
+    //                 ? usersWithoutDoctor
+    //                 : "Lấy danh sách người dùng thất bại",
+    //         counts,
+    //     });
+    // }
     return res.status(200).json({
         success: response.length > 0 ? true : false,
         data: response.length > 0 ? response : "Lấy danh sách người dùng thất bại",

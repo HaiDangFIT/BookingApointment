@@ -1,11 +1,10 @@
 const asyncHandler = require('express-async-handler');
 const Specialty = require("../models/specialty");
-
+const cloudinary = require("../config/cloudinary.config")
 
 const getAllSpecialty = asyncHandler(async (req, res) => {
     const queries = { ...req.query };
     const exludeFields = ["limit", "sort", "page", "fields"];
-    console.log(req.query.fields);
 
     exludeFields.forEach((e1) => delete queries[e1]);
     let queryString = JSON.stringify(queries);
@@ -59,8 +58,37 @@ const getSpecialty = asyncHandler(async (req, res) => {
     });
 });
 
+const addSpecialty = asyncHandler(async (req, res) => {
+    const { name } = req.body;
+    if (!name) throw new Error("Vui lòng nhập đầy đủ");
+    const response = await Specialty.create(req.body);
+    return res.status(200).json({
+        success: response ? true : false,
+        message: response
+            ? "Thêm chuyên khoa thành công"
+            : "Thêm chuyên khoa thất bại",
+    });
+});
+
+const updateSpecialty = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    if (Object.keys(req.body).length === 0)
+        throw new Error("Vui lòng nhập đầy đủ");
+    const response = await Specialty.findByIdAndUpdate(id, req.body, {
+        new: true,
+    });
+    return res.status(200).json({
+        success: response ? true : false,
+        message: response
+            ? "Cập nhật thông tin chuyên khoa thành công"
+            : "Cập nhật thông tin chuyên khoa thất bại",
+    });
+});
+
 module.exports = {
     getAllSpecialty,
     getCountSpecialty,
     getSpecialty,
+    addSpecialty,
+    updateSpecialty,
 };

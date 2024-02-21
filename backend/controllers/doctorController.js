@@ -188,14 +188,14 @@ const addDoctor = asyncHandler(async (req, res) => {
         }
         const response = await Doctor.create({
             _id: id,
-            specialtyID,
-            position,
             hospitalID,
+            specialtyID,
             description,
+            position,
         });
         return res.status(200).json({
             success: response ? true : false,
-            message: respone
+            message: response
                 ? "Thêm thông tin bác sĩ thành công"
                 : "Thêm thông tin bác sĩ thất bại",
         })
@@ -216,12 +216,12 @@ const deleteDoctor = asyncHandler(async (req, res) => {
 });
 
 const updateDoctor = asyncHandler(async (req, res) => {
-    const id = req.params;
-    const { specialtyID, hospitalID, avatar } = req.body;
+    const { id } = req.params;
+    const { specialtyID, hospitalID } = req.body;
     if (Object.keys(req.body).length === 0) {
         throw new Error("Vui lòng nhập đầy đủ!!!");
     }
-    const Doctor = await Doctor.findById(id).populate("hospitalID");
+    const doctor = await Doctor.findById(id).populate("hospitalID");
     if (specialtyID) {
         if (hospitalID) {
             const hospital = await Hospital.findById(hospitalID);
@@ -240,6 +240,15 @@ const updateDoctor = asyncHandler(async (req, res) => {
             }
         }
     }
+    const response = await Doctor.findByIdAndUpdate(id, req.body, {
+        new: true
+    });
+    return res.status(200).json({
+        success: response ? true : false,
+        message: response
+            ? "Cập nhật thông tin bác sĩ thành công"
+            : "Cập nhật thông tin bác sĩ thất bại",
+    });
 });
 
 const ratingsDoctor = asyncHandler(async (req, res) => {

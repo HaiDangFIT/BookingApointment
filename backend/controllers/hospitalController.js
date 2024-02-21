@@ -1,3 +1,4 @@
+const { response } = require("express");
 const Hospital = require("../models/hospital");
 const Specialty = require("../models/specialty");
 const User = require("../models/user");
@@ -89,8 +90,95 @@ const getCountHospital = asyncHandler(async (req, res) => {
     });
 });
 
+const addHospital = asyncHandler(async (req, res) => {
+    const { name, address, hostID, description } = req.body;
+    if (!name || !address || !hostID || !description) {
+        throw new Error("Vui lòng nhập đầy đủ");
+    }
+    const alreadyHost = await User.findById({ _id: hostID, role: 2 });
+    if (!alreadyHost) {
+        throw new Error("Người dùng không có quyền!!!");
+    }
+    const response = await Hospital.create(req.body);
+    return res.status(200).json({
+        success: response ? true : false,
+        message: response ? "Thêm bệnh viện thành công" : "Thêm bệnh viện thất bại",
+    });
+});
+
+const updateHospital = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    if (Object.keys(req.body).length === 0) {
+        throw new Error("Vui lòng nhập đầy đủ");
+    }
+    const { hostID } = req.body;
+    if (hostID) {
+        const alreadyHost = await User.find({ _id: hostID, role: 2 });
+        if (!alreadyHost) throw new Error("Người dùng không có quyền!!!");
+    }
+    const { specialtyID, ...data } = req.body;
+    const response = await Hospital.findByIdAndUpdate(id, data, {
+        new: true,
+    });
+    return res.status(200).json({
+        success: response ? true : false,
+        message: response
+            ? "Cập nhật thông tin bệnh viện thành công"
+            : "Cập nhật thông tin bệnh viện thất bại",
+    });
+});
+
+const deleteHospital = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const response = await Hospital.findByIdAndDelete(id);
+    return res.status(200).json({
+        success: respones ? true : false,
+        message: response ? "Xóa bệnh viện thành công" : "Xóa bệnh viện thất bại",
+    });
+});
+
+const addSpecialtyToHospital = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { specialtyID } = req.body;
+    const hospital = await Hospital.findById(id);
+
+    const notExistSpecialty = specialtyID?.filter(
+        (obj1) => !hospital.specialtyID?.some((obj2) => obj1 === obj2._id.toString())
+    );
+    const updateSpecialty = hospital.specialtyID.concat(notExistSpecialty);
+
+    hospital.specialtyID = updateSpecialty;
+    await hospital.save();
+    return res.status(200).json({
+        success: true,
+        message: 'Thêm chuyên khoa thành công',
+    });
+});
+
+const deleteSpecialtyHospital = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { specialtyID } = req.body;
+    const hospital = await Hospital.findById(id);
+
+    const updateSpecialtys = hospital?.specialtyID?.filter(
+        (el) => !specialtyID?.some((el2) => el._id.toString() === el2._id.toString())
+    );
+    hospital.specialtyID = updateSpecialtys;
+
+    await hospital.save();
+
+    return res.status(200).json({
+        success: true,
+        message: `Xóa chuyên khoa của bệnh viện thành công`,
+    });
+});
 module.exports = {
     getAllHospitals,
     getHospital,
     getCountHospital,
+    addHospital,
+    deleteHospital,
+    updateHospital,
+    addSpecialtyToHospital,
+    deleteSpecialtyHospital,
 };

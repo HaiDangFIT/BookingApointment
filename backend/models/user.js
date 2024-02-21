@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const bcryptjs = require("bcrypt");
-const moment = require('moment-timezone');
 
 const userSchema = new mongoose.Schema(
     {
@@ -59,10 +58,7 @@ const userSchema = new mongoose.Schema(
         }
     },
     {
-        timestamps: {
-            type: Date,
-            default: new Date(new Date().getTime + (7 * 60 * 60 * 1000))
-        }
+        timestamps: true
     }
 );
 

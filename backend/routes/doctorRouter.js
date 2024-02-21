@@ -13,7 +13,7 @@ router.put("/rating", [verifyAccessToken], ctrls.ratingsDoctor);
 
 //Admin or Host
 router.post("/", [verifyAccessToken, isAdminOrHost, checkPermissionDoctor], ctrls.addDoctor);
-router.delete("/:id", [verifyAccessToken, isAdminOrHost], ctrls.deleteDoctor),
-    router.put("/", [verifyAccessToken, isAdminOrHost, checkPermissionDoctor], ctrls.updateDoctor);
+router.delete("/:id", [verifyAccessToken, isAdminOrHost], ctrls.deleteDoctor);
+router.put("/:id", [verifyAccessToken, isAdminOrHost], ctrls.updateDoctor);
 
 module.exports = router;
