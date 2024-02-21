@@ -66,8 +66,8 @@ const getAllSchedule = asyncHandler(async (req, res) => {
                 select: { __v: 0, password: 0, role: 0 },
             },
             {
-                path: "specialID",
-                model: "Special",
+                path: "specialtyID",
+                model: "Specialty",
                 match: nameSpecialty ? { name: { $regex: nameSpecialty, $option: "i" } } : {},
             },
             {

@@ -115,7 +115,29 @@ const cancelBookingByPatient = asyncHandler(async (req, res) => {
     });
 });
 
+const updateApointment = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const apointment = await Apointment.findById(id);
+    if (apointment.status === "Đã hủy" || apointment.status === "Bỏ khám" || apointment.status === "Đã khám") {
+        throw new Error(`Không thể sửa trạng thái của lịch ${apointment.status.toLowerCase()}`);
+    }
+    const response = await Apointment.findByIdAndUpdate(
+        id,
+        req.body,
+        {
+            new: true,
+        }
+    );
+    return res.status(200).json({
+        success: response ? true : false,
+        message: response
+            ? "Cập nhật trạng thái lịch khám thành công"
+            : "Cập nhật trạng thái lịch khám thất bại",
+    });
+});
+
 module.exports = {
     addBookingByPatient,
     cancelBookingByPatient,
+    updateApointment,
 }

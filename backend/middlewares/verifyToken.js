@@ -90,7 +90,7 @@ const checkPermissionDoctor = asyncHandler(async (req, res, next) => {
             if (doctor?.hospitalID?.host?.toString() !== _id.toString()) {
                 return res.status(401).json({
                     success: false,
-                    message: "Không cớ quyền truy cập!!!",
+                    message: "Không có quyền truy cập!!!",
                 })
             }
         }

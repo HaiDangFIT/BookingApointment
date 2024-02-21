@@ -54,5 +54,19 @@ const apointmentSchema = new mongoose.Schema(
     }
 );
 
+apointmentSchema.pre("save", async function (next) {
+    const currentDate = new Date();
+    const localTimestamp = currentDate.getTime() + (7 * 60 * 60 * 1000);
+    this.createdAt = new Date(localTimestamp);
+    this.updatedAt = new Date(localTimestamp);
+    next();
+});
+
+apointmentSchema.pre('findOneAndUpdate', async function (next) {
+    const currentDate = new Date();
+    const localTimestamp = currentDate.getTime() + (7 * 60 * 60 * 1000);
+    this._update.updatedAt = new Date(localTimestamp);
+    next();
+});
 //Export the model
 module.exports = mongoose.model("Apointment", apointmentSchema);

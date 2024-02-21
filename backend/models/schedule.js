@@ -46,5 +46,19 @@ const scheduleSchema = new mongoose.Schema(
     }
 );
 
+scheduleSchema.pre("save", async function (next) {
+    const currentDate = new Date();
+    const localTimestamp = currentDate.getTime() + (7 * 60 * 60 * 1000);
+    this.createdAt = new Date(localTimestamp);
+    this.updatedAt = new Date(localTimestamp);
+    next();
+});
+
+scheduleSchema.pre('findOneAndUpdate', async function (next) {
+    const currentDate = new Date();
+    const localTimestamp = currentDate.getTime() + (7 * 60 * 60 * 1000);
+    this._update.updatedAt = new Date(localTimestamp);
+    next();
+});
 //Export the model
 module.exports = mongoose.model("Schedule", scheduleSchema);
