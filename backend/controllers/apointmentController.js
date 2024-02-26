@@ -4,6 +4,80 @@ const Schedule = require("../models/schedule");
 const asyncHandler = require("express-async-handler");
 const ObjectID = require("mongodb").ObjectId;
 
+const getApointment = asyncHandler(async (req, res) => {
+    const { _id, role } = req.user;
+    const queries = { ...req.query };
+    const exludeFields = ["limit", "sort", "page", "fields"];
+    exludeFields.forEach((el) => delete queries[el]);
+    let queryString = JSON.stringify(queries);
+    queryString = queryString.replace(
+        /\b(gte|gt|lt|lte)\b/g,
+        (macthedEl) => `$${macthedEl}`
+    );
+    const formatedQueries = JSON.parse(queryString);
+    if (queries?.status) {
+        formatedQueries.status = { $regex: queries.status, $options: "i" };
+    }
+    if (role === 4) {
+        formatedQueries.patientID = _id;
+    }
+
+    const queryCommand = Apointment.find(formatedQueries)
+        .populate({
+            path: "scheduleID",
+            populate: {
+                path: "doctorID",
+                model: "Doctor",
+                select: { rating: 0 },
+                populate: [
+                    {
+                        path: "hospitalID",
+                        model: "Hospital",
+                        select: { specialtyID: 0, rating: 0 },
+                        match: role == 2 ? { hostID: new ObjectID(_id) } : {},
+                    },
+                    {
+                        path: "specialtyID",
+                        model: "Specialty",
+                    },
+                    {
+                        path: "_id",
+                        model: "User",
+                        match: role === 3 ? { _id: new ObjectID(_id) } : {},
+                    }
+                ]
+            }
+        })
+        .populate("patientID");
+    if (req.query.sort) {
+        const sortBy = req.query.sort.split(",").join(" ");
+        queryCommand = queryCommand.sort(sortBy);
+    }
+
+    if (req.query.fields) {
+        const fields = req.query.fields.split(",").join(" ");
+        queryCommand = queryCommand.select(fields);
+    }
+
+    const page = +req.query.page || 1;
+    const limit = +req.query.limit || process.env.LIMIT;
+    const skip = (page - 1) * limit;
+    queryCommand.skip(skip).limit(limit);
+
+    const response = await queryCommand.exec();
+
+    let newResponse = response.filter((el) => el?.scheduleID?.doctorID !== null);
+    const counts = newResponse?.length;
+    return res.status(200).json({
+        success: newResponse.length > 0 ? true : false,
+        data:
+            newResponse.length > 0
+                ? newResponse
+                : "Lấy danh sách lịch khám bệnh thất bại",
+        counts,
+    });
+});
+
 const addBookingByPatient = asyncHandler(async (req, res) => {
     const { _id, role } = req.user;
     if (role === 4) {
@@ -136,8 +210,25 @@ const updateApointment = asyncHandler(async (req, res) => {
     });
 });
 
+const addApointmentByAd = asyncHandler(async (req, res) => {
+    const { scheduleID, time, patientID } = req.body;
+    if (!scheduleID || !time || !patientID) {
+        throw new Error("Vui lòng nhập đầy đủ");
+    }
+    const alreadyUser = await User.findById(patientID);
+    if (!alreadyUser) {
+        throw new Error("Người dùng không tồn tại");
+    }
+    const alreadySchedule = await Schedule.findById(scheduleID);
+    if (!alreadySchedule) {
+        throw new Error("Lịch khám không tồn tại");
+    }
+});
+
 module.exports = {
+    getApointment,
     addBookingByPatient,
     cancelBookingByPatient,
     updateApointment,
+    addApointmentByAd,
 }
